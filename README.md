@@ -1,5 +1,7 @@
 # Jobz
 
+> **All credit goes to [Santiago (santifer)](https://github.com/santifer) and the original [career-ops](https://github.com/santifer/career-ops) repo — the entire backend, AI pipeline, scoring engine, portal scanning, and prompt modes are his work.** I just did some personal touchups for my own use case. Go star the original. ⭐
+
 AI-powered job search pipeline — evaluate offers, generate tailored LaTeX resumes, track applications, and answer application questions — all from your terminal.
 
 <p align="center">
