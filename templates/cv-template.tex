@@ -1,0 +1,114 @@
+\documentclass[10.9pt, letterpaper]{article}
+
+% ============================================================
+%  PACKAGES
+% ============================================================
+\usepackage[top=0.32in, bottom=0.32in, left=0.42in, right=0.42in]{geometry}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{hyperref}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage{parskip}
+\hyphenpenalty=10000
+\exhyphenpenalty=10000
+
+\hypersetup{colorlinks=true, urlcolor=black, linkcolor=black}
+
+% ============================================================
+%  SECTION FORMATTING
+% ============================================================
+\titleformat{\section}
+  {\normalfont\small\bfseries\uppercase}{}{0em}{}
+[\vspace{-4pt}\rule{\linewidth}{0.6pt}\vspace{-1pt}]
+\titlespacing{\section}{0pt}{6pt}{2pt}
+
+\setlist[itemize]{
+  leftmargin=1.1em, itemsep=1pt, parsep=0pt, topsep=1pt, label=\textbullet
+}
+
+\pagestyle{empty}
+\parskip=0pt
+\parindent=0pt
+
+\begin{document}
+
+% ============================================================
+%  HEADER
+% ============================================================
+\begin{center}
+  {\large\bfseries <<NAME>>}\\[2pt]
+  {\small <<HEADLINE>>}\\[1pt]
+  {\small
+    <<PHONE>> \textbar{}
+    \href{mailto:<<EMAIL>>}{<<EMAIL>>} \textbar{}
+    \href{https://<<GITHUB_URL>>}{<<GITHUB_DISPLAY>>} \textbar{}
+    \href{https://<<LINKEDIN_URL>>}{<<LINKEDIN_DISPLAY>>}
+  }
+\end{center}
+
+\vspace{2pt}
+
+% ============================================================
+%  PROFESSIONAL SUMMARY
+% ============================================================
+\section{Professional Summary}
+
+{\small <<SUMMARY_TEXT>>}
+
+% ============================================================
+%  SKILLS
+% ============================================================
+\vspace{-0.2em}
+
+\section{Skills}
+
+{\small
+<<SKILLS_BLOCK>>
+}
+\medskip
+
+% ============================================================
+%  TECHNICAL EXPERIENCE
+% ============================================================
+\vspace{-0.8em}
+\section{Technical Experience}
+
+<<EXPERIENCE_BLOCK>>
+
+% ============================================================
+%  EDUCATION
+% ============================================================
+\vspace{-0.1em}
+
+\section{Education}
+
+{\small
+<<EDUCATION_BLOCK>>
+}
+
+% ============================================================
+%  PROJECTS
+% ============================================================
+\vspace{-0.1em}
+
+\section{Projects}
+
+{\small
+<<PROJECTS_BLOCK>>
+}
+
+% ============================================================
+%  PUBLICATIONS
+% ============================================================
+\vspace{-0.1em}
+
+\section{Publications}
+
+{\small
+<<PUBLICATIONS_BLOCK>>
+}
+
+\end{document}
