@@ -2,6 +2,13 @@
 
 AI-powered job search pipeline — evaluate offers, generate tailored LaTeX resumes, track applications, and answer application questions — all from your terminal.
 
+<p align="center">
+  <img src="docs/screenshot-dark.png" alt="Jobz dashboard — dark mode" width="100%">
+</p>
+<p align="center">
+  <img src="docs/screenshot-light.png" alt="Jobz dashboard — light mode" width="100%">
+</p>
+
 ---
 
 ## What It Does
