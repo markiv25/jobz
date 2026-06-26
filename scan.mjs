@@ -35,6 +35,10 @@ const FETCH_TIMEOUT_MS = 10_000;
 // ── API detection ───────────────────────────────────────────────────
 
 function detectApi(company) {
+  // Explicit websearch-only companies: no direct API (Workday/Eightfold/etc).
+  // These are scanned via the search layer, not here — skip cleanly (no 404).
+  if (company.scan_method === 'websearch') return null;
+
   // Greenhouse: explicit api field
   if (company.api && company.api.includes('greenhouse')) {
     return { type: 'greenhouse', url: company.api };

@@ -389,7 +389,7 @@ function buildHTML(pdfs, map, queue) {
             <div class="btn-actions">
               ${isProcessing ? '' : `<button class="btn btn-danger" onclick="removeItem('${item.id}')">✕</button>`}
               <a class="btn btn-teal" href="/qa/${item.id}" target="_blank">QA</a>
-              ${isSkip ? `<button class="btn btn-purple" onclick="forceGenerate('${item.id}')">Generate anyway</button>` : ''}
+              ${isSkip ? `<button class="btn btn-purple" onclick="forceGenerate('${item.id}')" title="Generate resume anyway">Force</button>` : ''}
             </div>
           </td>
         </tr>`;
@@ -403,68 +403,100 @@ function buildHTML(pdfs, map, queue) {
 <title>Jobz — Vikram Parmar</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
+  /* Design system: Data-Dense Dashboard (ui-ux-pro-max) — blue data + amber
+     highlights, Fira Sans/Code, WCAG AA contrast, space-efficient grid. */
   :root, [data-theme="dark"] {
-    --bg:        #0c1220;
-    --surface:   #111827;
-    --surface-2: #1a2236;
-    --surface-3: #1e2d45;
-    --border:    #1e2d45;
-    --border-2:  #243044;
+    --bg:        #0a0e17;
+    --bg-2:      #0d1320;
+    --surface:   #121a2b;
+    --surface-2: #182238;
+    --surface-3: #1f2c47;
+    --border:    #1e2a42;
+    --border-2:  #2a3a58;
     --primary:   #3b82f6;
     --primary-h: #60a5fa;
-    --success:   #10b981;
-    --success-h: #34d399;
+    --success:   #22c55e;
+    --success-h: #4ade80;
     --warning:   #f59e0b;
     --danger:    #ef4444;
     --danger-h:  #f87171;
     --purple:    #8b5cf6;
     --purple-h:  #a78bfa;
-    --text-1:    #f1f5f9;
-    --text-2:    #94a3b8;
-    --text-3:    #64748b;
-    --text-4:    #3d5068;
-    --radius:    8px;
-    --radius-sm: 5px;
-    --radius-lg: 12px;
+    --text-1:    #f1f5fb;
+    --text-2:    #a5b4cc;
+    --text-3:    #6b7a96;
+    --text-4:    #3d4b66;
+    --shadow:    0 4px 24px rgba(0,0,0,0.4);
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+    --radius:    9px;
+    --radius-sm: 6px;
+    --radius-lg: 13px;
+    --font-display: 'Fira Code', ui-monospace, monospace;
+    --font-body: 'Fira Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --grad-accent: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
   }
   [data-theme="light"] {
-    --bg:        #f1f5f9;
+    --bg:        #f8fafc;
+    --bg-2:      #eef2f8;
     --surface:   #ffffff;
-    --surface-2: #f8fafc;
-    --surface-3: #f1f5f9;
-    --border:    #e2e8f0;
-    --border-2:  #cbd5e1;
-    --text-1:    #0f172a;
-    --text-2:    #475569;
-    --text-3:    #94a3b8;
-    --text-4:    #cbd5e1;
+    --surface-2: #f4f7fb;
+    --surface-3: #e9eef6;
+    --border:    #dbe3ef;
+    --border-2:  #c3cfe0;
+    --primary:   #1e40af;
+    --primary-h: #1d4ed8;
+    --text-1:    #0f1e3d;
+    --text-2:    #41506b;
+    --text-3:    #7382a0;
+    --text-4:    #b3bfd2;
+    --shadow:    0 4px 24px rgba(30,50,90,0.10);
+    --shadow-sm: 0 1px 3px rgba(30,50,90,0.08);
   }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
   body {
-    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: var(--font-body);
     background: var(--bg); color: var(--text-1);
-    min-height: 100vh; font-size: 0.875rem; line-height: 1.6;
+    min-height: 100vh; font-size: 0.875rem; line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(820px 380px at 85% -10%, rgba(59,130,246,0.07), transparent 62%);
+    background-attachment: fixed;
+  }
+  h1,h2,h3,.font-display { font-family: var(--font-display); letter-spacing: -0.01em; }
+  button, a, .tab, .jf, .ja, .cmd-card, .job-card, [onclick] { cursor: pointer; }
+  /* Accessible focus — visible ring for keyboard nav (WCAG) */
+  a:focus-visible, button:focus-visible, input:focus-visible, .tab:focus-visible {
+    outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 4px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
   }
 
   /* ── Header ── */
   .header {
-    background: var(--surface);
+    background: color-mix(in srgb, var(--surface) 72%, transparent);
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
     border-bottom: 1px solid var(--border);
     padding: 0 2rem;
     display: flex; align-items: center; justify-content: space-between;
-    height: 60px; position: sticky; top: 0; z-index: 100;
+    height: 64px; position: sticky; top: 0; z-index: 100;
   }
-  .header-left { display: flex; align-items: center; gap: 0.75rem; }
+  .header-left { display: flex; align-items: center; gap: 0.8rem; }
   .logo-mark {
-    width: 32px; height: 32px; border-radius: var(--radius-sm);
-    background: linear-gradient(135deg, var(--primary) 0%, var(--purple) 100%);
+    width: 36px; height: 36px; border-radius: 10px;
+    background: var(--grad-accent);
     display: flex; align-items: center; justify-content: center;
-    font-weight: 700; font-size: 0.8rem; color: #fff; letter-spacing: -0.02em; flex-shrink: 0;
+    font-family: var(--font-display);
+    font-weight: 800; font-size: 0.85rem; color: #fff; letter-spacing: -0.03em; flex-shrink: 0;
+    box-shadow: 0 4px 16px rgba(79,140,255,0.35);
   }
-  .header-title { font-weight: 700; font-size: 0.95rem; color: var(--text-1); letter-spacing: -0.01em; }
-  .header-sub   { font-size: 0.75rem; color: var(--text-3); }
+  .header-title { font-family: var(--font-display); font-weight: 700; font-size: 1rem; color: var(--text-1); letter-spacing: -0.02em; }
+  .header-sub   { font-size: 0.74rem; color: var(--text-3); font-family: var(--font-mono); }
   .header-stats { display: flex; align-items: center; gap: 0.5rem; }
   .stat-chip {
     display: flex; align-items: center; gap: 0.35rem;
@@ -486,27 +518,49 @@ function buildHTML(pdfs, map, queue) {
   .refresh-btn:hover { border-color: var(--primary); color: var(--primary); }
 
   /* ── Main layout ── */
-  .main { padding: 1.5rem 2rem 3rem; max-width: 1400px; }
+  .main { padding: 1.5rem 2.5rem 3rem; max-width: 1760px; margin: 0 auto; width: 100%; }
 
-  /* ── Tabs ── */
-  .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 1.5rem; }
+  /* ── Tabs (segmented pills) ── */
+  .tabs {
+    display: inline-flex; gap: 4px; margin-bottom: 1.75rem;
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 5px; border-radius: 13px;
+  }
   .tab {
-    padding: 0.7rem 1.1rem; font-size: 0.84rem; font-weight: 500; color: var(--text-3);
-    cursor: pointer; border: none; border-bottom: 2px solid transparent; background: none;
-    transition: color 0.15s, border-color 0.15s; display: flex; align-items: center; gap: 0.45rem;
+    padding: 0.5rem 1rem; font-size: 0.82rem; font-weight: 600; color: var(--text-3);
+    cursor: pointer; border: none; border-radius: 9px; background: none;
+    transition: all 0.16s; display: flex; align-items: center; gap: 0.45rem;
     letter-spacing: -0.01em;
   }
-  .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+  .tab.active { color: var(--text-1); background: var(--surface-2); box-shadow: 0 1px 0 rgba(255,255,255,0.04) inset, 0 2px 8px rgba(0,0,0,0.25); }
+  .tab.active svg { color: var(--primary); }
   .tab:hover:not(.active) { color: var(--text-2); }
   .tab-badge {
-    background: var(--warning); color: #fff; border-radius: 10px;
+    background: var(--grad-accent); color: #fff; border-radius: 10px;
     padding: 0.05rem 0.5rem; font-size: 0.65rem; font-weight: 700; line-height: 1.6;
   }
   .tab-content { display: none; }
   .tab-content.active { display: block; }
 
   /* ── Tables ── */
-  .table-wrap { border-radius: var(--radius-lg); border: 1px solid var(--border); overflow: hidden; }
+  .table-wrap { border-radius: var(--radius-lg); border: 1px solid var(--border); overflow-x: auto; overflow-y: hidden; }
+  .table-wrap table { width: 100%; }
+  /* JD Queue table: fixed layout so the Actions column never clips. The JD
+     preview column absorbs slack and truncates; others get comfortable widths. */
+  #tab-queue .table-wrap table { table-layout: fixed; }
+  #tab-queue thead th:nth-child(1) { width: 80px; }       /* Added */
+  #tab-queue thead th:nth-child(2) { width: 170px; }      /* Company */
+  #tab-queue thead th:nth-child(3) { width: auto; }       /* JD preview — absorbs slack */
+  #tab-queue thead th:nth-child(4) { width: 180px; }      /* Status */
+  #tab-queue thead th:nth-child(5) { width: 168px; }      /* Actions */
+  #tab-queue .btn-actions { display: flex; gap: 6px; flex-wrap: nowrap; align-items: center; }
+  #tab-queue #queue-body td:nth-child(3) { max-width: 0; overflow: hidden; }
+  #tab-queue #queue-body td:nth-child(4) { max-width: 0; }
+  #tab-queue .preview-text { max-width: 100% !important; }
+  #tab-queue .status-chip, #tab-queue .step-text {
+    display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
+  #tab-queue #queue-body td:nth-child(5) { white-space: nowrap; }
+  @media (max-width: 1000px) { #tab-queue .table-wrap table { min-width: 880px; table-layout: auto; } }
   table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
   thead th {
     text-align: left; padding: 0.7rem 1rem; color: var(--text-3);
@@ -681,6 +735,77 @@ function buildHTML(pdfs, map, queue) {
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.76rem; line-height: 1.5;
     white-space: pre-wrap; word-break: break-word; max-height: 460px; overflow-y: auto;
     padding: 14px 16px; color: var(--text-2); }
+
+  /* ── ALL JOBS — mission control ── */
+  .jobs-bar {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+  .jobs-search {
+    flex: 1; min-width: 220px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 11px; padding: 11px 15px; color: var(--text-1); font-size: 0.82rem;
+    font-family: var(--font-mono); transition: border-color 0.15s, box-shadow 0.15s; }
+  .jobs-search::placeholder { color: var(--text-4); }
+  .jobs-search:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,140,255,0.15); }
+  .jf {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 9px 13px; color: var(--text-3); font-size: 0.7rem; font-weight: 700;
+    cursor: pointer; letter-spacing: 0.04em; text-transform: uppercase; transition: all 0.14s; }
+  .jf:hover { color: var(--text-1); border-color: var(--border-2); }
+  .jf.on { color: #fff; border-color: transparent; }
+  .jf.on[data-f="all"]      { background: #475569; }
+  .jf.on[data-f="resume"]   { background: #16a34a; }
+  .jf.on[data-f="evaluated"]{ background: #2563eb; }
+  .jf.on[data-f="pending"]  { background: #d97706; }
+  .jf.on[data-f="skip"]     { background: #dc2626; }
+  .jobs-count { font-family: ui-monospace, monospace; font-size: 0.72rem; color: var(--text-3); margin-left: auto; }
+
+  .jobs-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px,1fr)); gap: 12px; margin-bottom: 22px; }
+  .jstat {
+    background: var(--surface);
+    border: 1px solid var(--border); border-radius: 11px; padding: 14px 16px;
+    position: relative; overflow: hidden; transition: border-color 0.18s, box-shadow 0.18s; }
+  .jstat:hover { border-color: var(--border-2); box-shadow: var(--shadow-sm); }
+  .jstat::after { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background: var(--c, #475569); }
+  .jstat-n { font-family: var(--font-display); font-size: 1.7rem; font-weight: 700; line-height: 1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .jstat-l { font-size: 0.66rem; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.07em; margin-top: 8px; font-weight: 600; }
+
+  .job-card {
+    display: grid; grid-template-columns: 56px 1fr auto; gap: 16px; align-items: center;
+    background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--sc, #475569);
+    border-radius: 11px; padding: 13px 17px; margin-bottom: 8px; transition: background 0.16s, border-color 0.16s, box-shadow 0.16s; }
+  .job-card:hover { border-color: var(--border-2); background: var(--surface-2); box-shadow: var(--shadow-sm); }
+  .job-score {
+    width: 54px; height: 54px; border-radius: 13px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; font-family: var(--font-display);
+    background: var(--scbg, rgba(71,85,105,0.14)); border: 1px solid color-mix(in srgb, var(--sc) 30%, transparent); }
+  .job-score .n { font-size: 1.15rem; font-weight: 700; color: var(--sc, #94a3b8); line-height: 1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .job-score .o { font-size: 0.52rem; color: var(--text-3); margin-top: 3px; font-family: var(--font-mono); }
+  .job-score.none .n { font-size: 1rem; color: var(--text-3); }
+  .job-mid { min-width: 0; }
+  .job-co { font-family: var(--font-display); font-size: 0.95rem; font-weight: 700; color: var(--text-1); letter-spacing: -0.01em; }
+  .job-role { font-size: 0.78rem; color: var(--text-2); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 46ch; }
+  .job-meta { display: flex; align-items: center; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+  .chip { font-size: 0.62rem; font-weight: 700; padding: 2px 8px; border-radius: 20px; letter-spacing: 0.04em; text-transform: uppercase; }
+  .chip-status { color: #fff; }
+  .st-resume    { background: #16a34a; } .st-evaluated { background: #2563eb; }
+  .st-pending   { background: #d97706; } .st-processing{ background: #7c3aed; }
+  .st-skip      { background: #b91c1c; } .st-error     { background: #dc2626; }
+  .chip-eff { border: 1px solid var(--border); color: var(--text-2); }
+  .chip-eff.hard { border-color: #c084fc; color: #c084fc; }
+  .job-skip { font-size: 0.7rem; color: var(--text-3); margin-top: 5px; font-style: italic; max-width: 60ch; }
+  .job-skip.flagged { color: var(--warning); font-style: normal; }
+  .job-actions { display: flex; gap: 6px; align-items: center; }
+  .ja {
+    font-size: 0.7rem; font-weight: 650; padding: 6px 11px; border-radius: 8px; cursor: pointer;
+    border: 1px solid var(--border); background: transparent; color: var(--text-2); text-decoration: none;
+    display: inline-flex; align-items: center; gap: 4px; transition: all 0.12s; white-space: nowrap; }
+  .ja:hover { color: var(--text-1); border-color: var(--text-3); }
+  .ja-pdf  { background: rgba(22,163,74,0.14); border-color: transparent; color: #4ade80; }
+  .ja-qa   { background: rgba(20,184,166,0.14); border-color: transparent; color: #2dd4bf; }
+  .ja-jd   { color: var(--text-3); }
+  .ja-retry { background: rgba(245,165,36,0.14); border-color: transparent; color: var(--warning); }
+  .ja-retry:hover { background: rgba(245,165,36,0.22); color: var(--warning); }
+  .ja[disabled] { opacity: 0.45; pointer-events: none; }
+  .jobs-empty { text-align: center; color: var(--text-3); padding: 50px; font-family: ui-monospace, monospace; }
 </style>
 </head>
 <body>
@@ -705,9 +830,13 @@ function buildHTML(pdfs, map, queue) {
 
   <div class="main">
     <div class="tabs">
-      <button class="tab active" onclick="switchTab('resumes', this)">
+      <button class="tab active" onclick="switchTab('jobs', this)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+        All Jobs
+      </button>
+      <button class="tab" onclick="switchTab('resumes', this)">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
-        All Resumes
+        Resumes
       </button>
       <button id="tab-btn-queue" class="tab" onclick="switchTab('queue', this)">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
@@ -720,8 +849,23 @@ function buildHTML(pdfs, map, queue) {
       </button>
     </div>
 
+    <!-- TAB: All Jobs (unified command center) -->
+    <div id="tab-jobs" class="tab-content active">
+      <div class="jobs-stats" id="jobs-stats"></div>
+      <div class="jobs-bar">
+        <input class="jobs-search" id="jobs-search" placeholder="filter by company, role, or keyword…" oninput="renderJobs()">
+        <button class="jf on" data-f="all"       onclick="setJobFilter('all', this)">All</button>
+        <button class="jf"    data-f="resume"    onclick="setJobFilter('resume', this)">Resume</button>
+        <button class="jf"    data-f="evaluated" onclick="setJobFilter('evaluated', this)">Scored</button>
+        <button class="jf"    data-f="pending"   onclick="setJobFilter('pending', this)">Pending</button>
+        <button class="jf"    data-f="skip"      onclick="setJobFilter('skip', this)">Skipped</button>
+        <span class="jobs-count" id="jobs-count"></span>
+      </div>
+      <div id="jobs-list"><div class="jobs-empty">loading jobs…</div></div>
+    </div>
+
     <!-- TAB: All Resumes -->
-    <div id="tab-resumes" class="tab-content active">
+    <div id="tab-resumes" class="tab-content">
       <div class="table-wrap">
         <table>
           <thead>
@@ -890,7 +1034,11 @@ function buildHTML(pdfs, map, queue) {
   let refreshTimer;
   function resetRefreshTimer() {
     clearTimeout(refreshTimer);
-    refreshTimer = setTimeout(() => location.reload(), 30000);
+    refreshTimer = setTimeout(() => {
+      // Jobs tab self-refreshes via loadJobs(); don't blow away filters/search.
+      if (localStorage.getItem('jobz-tab') === 'jobs') { resetRefreshTimer(); return; }
+      location.reload();
+    }, 30000);
   }
   document.addEventListener('keydown', resetRefreshTimer);
   document.addEventListener('input', resetRefreshTimer);
@@ -959,6 +1107,128 @@ function buildHTML(pdfs, map, queue) {
     localStorage.setItem('jobz-theme', next);
     document.getElementById('theme-toggle').textContent = next === 'dark' ? '☀️' : '🌙';
   }
+
+  // ── ALL JOBS — unified command center ──
+  let ALL_JOBS = [];
+  let JOB_FILTER = 'all';
+
+  function scoreColors(score) {
+    const n = score ? parseFloat(score) : 0;
+    if (!score)      return { c:'#94a3b8', bg:'rgba(148,163,184,0.12)' };
+    if (n >= 4.0)    return { c:'#22c55e', bg:'rgba(34,197,94,0.14)' };
+    if (n >= 3.0)    return { c:'#eab308', bg:'rgba(234,179,8,0.14)' };
+    if (n >= 2.5)    return { c:'#f97316', bg:'rgba(249,115,22,0.14)' };
+    return                  { c:'#ef4444', bg:'rgba(239,68,68,0.14)' };
+  }
+  const esc = s => (s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+  async function loadJobs() {
+    try {
+      ALL_JOBS = await fetch('/api/jobs').then(r => r.json());
+      renderStats();
+      renderJobs();
+    } catch (e) {
+      document.getElementById('jobs-list').innerHTML = '<div class="jobs-empty">failed to load jobs</div>';
+    }
+  }
+
+  function renderStats() {
+    const total = ALL_JOBS.length;
+    const c = s => ALL_JOBS.filter(j => statusBucket(j) === s).length;
+    const stats = [
+      { n: total,        l: 'Total Jobs', c: '#64748b' },
+      { n: c('resume'),  l: 'Resumes',    c: '#16a34a' },
+      { n: c('evaluated'), l: 'Scored',   c: '#2563eb' },
+      { n: c('pending'), l: 'Pending',    c: '#d97706' },
+      { n: c('skip'),    l: 'Skipped',    c: '#dc2626' },
+    ];
+    document.getElementById('jobs-stats').innerHTML = stats.map(s =>
+      '<div class="jstat" style="--c:'+s.c+'"><div class="jstat-n" style="color:'+s.c+'">'+s.n+'</div><div class="jstat-l">'+s.l+'</div></div>'
+    ).join('');
+  }
+
+  function statusBucket(j) {
+    if (j.hasPdf || j.status === 'resume') return 'resume';
+    if (j.status === 'skip')               return 'skip';
+    if (j.status === 'pending' || j.status === 'processing') return 'pending';
+    return 'evaluated';
+  }
+
+  function setJobFilter(f, btn) {
+    JOB_FILTER = f;
+    document.querySelectorAll('.jf').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+    renderJobs();
+  }
+
+  function renderJobs() {
+    const q = (document.getElementById('jobs-search').value || '').toLowerCase();
+    let list = ALL_JOBS.filter(j => JOB_FILTER === 'all' || statusBucket(j) === JOB_FILTER);
+    if (q) list = list.filter(j => (j.company + ' ' + j.role).toLowerCase().includes(q));
+    // sort: resumes first, then by score desc, then pending, skip last
+    const rank = { resume:0, evaluated:1, pending:2, skip:3 };
+    list.sort((a,b) => {
+      const ra = rank[statusBucket(a)], rb = rank[statusBucket(b)];
+      if (ra !== rb) return ra - rb;
+      return (parseFloat(b.score)||0) - (parseFloat(a.score)||0);
+    });
+
+    document.getElementById('jobs-count').textContent = list.length + ' / ' + ALL_JOBS.length + ' shown';
+
+    if (!list.length) {
+      document.getElementById('jobs-list').innerHTML = '<div class="jobs-empty">no jobs match this filter</div>';
+      return;
+    }
+
+    document.getElementById('jobs-list').innerHTML = list.map(j => {
+      const sc = scoreColors(j.score);
+      const bucket = statusBucket(j);
+      const stLabel = bucket === 'resume' ? 'resume ready' : (j.step && j.status==='processing' ? j.step : j.status);
+      const stCls = j.status === 'processing' ? 'st-processing'
+                  : bucket === 'resume' ? 'st-resume'
+                  : bucket === 'skip' ? 'st-skip'
+                  : bucket === 'pending' ? 'st-pending' : 'st-evaluated';
+      const scoreBox = j.score
+        ? '<div class="job-score" style="--sc:'+sc.c+';--scbg:'+sc.bg+'"><span class="n">'+esc(j.score.replace("/5",""))+'</span><span class="o">/5</span></div>'
+        : '<div class="job-score none"><span class="n">—</span></div>';
+      const pdfBtn = j.hasPdf
+        ? '<a class="ja ja-pdf" href="'+esc(j.pdfUrl)+'" target="_blank">↓ Resume</a>'
+        : '<button class="ja" disabled>no resume</button>';
+      const qaBtn = j.mapKey
+        ? '<a class="ja ja-qa" href="/qa-resume?k='+encodeURIComponent(j.mapKey)+'" target="_blank">QA</a>'
+        : (j.hasJd && j.id ? '<a class="ja ja-qa" href="/qa/'+encodeURIComponent(j.id)+'" target="_blank">QA</a>' : '');
+      const jdBtn = j.url ? '<a class="ja ja-jd" href="'+esc(j.url)+'" target="_blank">JD ↗</a>' : '';
+      // retry: always offer for error/skip; also a "regenerate" for existing resumes
+      const retryLabel = (bucket === 'skip' || j.status === 'error') ? '↻ Generate' : '↻ Redo';
+      const retryBtn = '<button class="ja ja-retry" onclick="retryJob(\\''+j.id+'\\', this)">'+retryLabel+'</button>';
+      return '<div class="job-card" style="--sc:'+sc.c+'">'
+        + scoreBox
+        + '<div class="job-mid">'
+          + '<div class="job-co">'+esc(j.company)+'</div>'
+          + '<div class="job-role">'+esc(j.role)+'</div>'
+          + '<div class="job-meta">'
+            + '<span class="chip chip-status '+stCls+'">'+esc(stLabel)+'</span>'
+            + '<span class="chip chip-eff '+(j.effort==='hard'?'hard':'')+'">'+esc(j.effort)+' effort</span>'
+          + '</div>'
+          + (j.skipReason ? '<div class="job-skip'+(j.hasPdf?' flagged':'')+'">'+(j.hasPdf?'⚑ flagged: ':'⊘ ')+esc(j.skipReason)+'</div>' : '')
+        + '</div>'
+        + '<div class="job-actions">'+pdfBtn+qaBtn+retryBtn+jdBtn+'</div>'
+      + '</div>';
+    }).join('');
+  }
+
+  async function retryJob(id, btn) {
+    btn.disabled = true; btn.textContent = '↻ queued…';
+    try {
+      await fetch('/api/jd/' + encodeURIComponent(id) + '/retry', { method: 'POST' });
+      btn.textContent = '✓ requeued';
+      setTimeout(loadJobs, 1200);
+    } catch { btn.disabled = false; btn.textContent = '↻ retry'; }
+  }
+
+  // initial load + live refresh of the jobs feed
+  loadJobs();
+  setInterval(loadJobs, 8000);
 
   // ── Command runner ──
   let pendingCmd = null;
@@ -1229,6 +1499,34 @@ Hard rules:
     return;
   }
 
+  // POST /api/jd/:id/retry — re-queue any job (error/skip/resume) to regenerate.
+  // Works for queue items by id, and for resume-map entries (revived into queue).
+  if (req.method === 'POST' && url.includes('/retry')) {
+    const id    = decodeURIComponent(url.replace('/api/jd/', '').replace('/retry', ''));
+    const queue = loadQueue();
+    const item  = queue.find(q => q.id === id);
+    if (item) {
+      item.status = 'pending'; item.step = ''; item.forceAll = true;
+      saveQueue(queue);
+    } else {
+      // revive from the resume-map (a generated/flagged resume) back into the queue
+      const map = loadMap();
+      const info = map[id];
+      if (info && info.jd) {
+        queue.push({
+          id: randomUUID(), added: new Date().toISOString(),
+          jd: info.jd, company: info.company, role: info.role,
+          url: (info.jd.match(/URL:\s*(\S+)/) || [])[1] || '',
+          effort: 'med', status: 'pending', forceAll: true
+        });
+        saveQueue(queue);
+      }
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: true }));
+    return;
+  }
+
   // POST /api/jd/:id/force — re-queue a skipped item, bypassing score threshold
   if (req.method === 'POST' && url.includes('/force')) {
     const id    = url.replace('/api/jd/', '').replace('/force', '');
@@ -1254,6 +1552,69 @@ Hard rules:
   if (url === '/api/queue') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(loadQueue()));
+    return;
+  }
+
+  // GET /api/jobs — unified job feed: every scraped job + score + effort +
+  // status + URL + whether a tailored resume PDF exists (for QA / download).
+  if (url === '/api/jobs') {
+    const queue = loadQueue();
+    const map   = loadMap();
+    const pdfs  = scanPDFs();
+
+    // index PDFs by company+role for matching to queue items
+    const pdfByKey = {};
+    for (const p of pdfs) {
+      const info = map[p.relKey] || map[p.fileKey] || {};
+      const k = `${(info.company||'').toLowerCase()}::${(info.role||'').toLowerCase()}`;
+      if (info.company) pdfByKey[k] = { pdfUrl: '/pdf/' + p.rel, mapKey: p.relKey || p.fileKey };
+    }
+
+    const urlOf = it => {
+      if (it.url) return it.url;
+      const m = (it.jd||'').match(/URL:\s*(\S+)/);
+      return m ? m[1] : '';
+    };
+
+    const jobs = queue.map(it => {
+      const key = `${(it.company||'').toLowerCase()}::${(it.role||'').toLowerCase()}`;
+      const pdf = pdfByKey[key];
+      return {
+        id:      it.id,
+        company: it.company || '—',
+        role:    it.role || '—',
+        url:     urlOf(it),
+        score:   it.score || null,
+        effort:  it.effort || 'med',
+        status:  it.status || 'pending',
+        step:    it.step || '',
+        skipReason: it.skip_reason || it.skipReason || '',
+        added:   it.added || '',
+        hasPdf:  !!pdf,
+        pdfUrl:  pdf?.pdfUrl || '',
+        mapKey:  pdf?.mapKey || '',
+        hasJd:   !!it.jd,
+      };
+    });
+
+    // include generated resumes that may not still be in the queue
+    const seen = new Set(jobs.map(j => `${j.company.toLowerCase()}::${j.role.toLowerCase()}`));
+    for (const p of pdfs) {
+      const info = map[p.relKey] || map[p.fileKey] || {};
+      if (!info.company) continue;
+      const key = `${info.company.toLowerCase()}::${(info.role||'').toLowerCase()}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      jobs.push({
+        id: p.relKey, company: info.company, role: info.role || '—',
+        url: (info.jd||'').match(/URL:\s*(\S+)/)?.[1] || '', score: info.score || null,
+        effort: 'med', status: 'resume', step: '', skipReason: info.flaggedReason || '', added: '',
+        hasPdf: true, pdfUrl: '/pdf/' + p.rel, mapKey: p.relKey || p.fileKey, hasJd: !!info.jd,
+      });
+    }
+
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(jobs));
     return;
   }
 

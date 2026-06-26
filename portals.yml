@@ -382,8 +382,8 @@ tracked_companies:
     enabled: true
 
   - name: Temporal
-    careers_url: https://job-boards.greenhouse.io/temporal
-    api: https://boards-api.greenhouse.io/v1/boards/temporal/jobs
+    careers_url: https://job-boards.greenhouse.io/temporaltechnologies
+    api: https://boards-api.greenhouse.io/v1/boards/temporaltechnologies/jobs
     notes: "Workflow orchestration."
     enabled: true
 
@@ -556,8 +556,10 @@ tracked_companies:
     enabled: false
 
   - name: Weights & Biases
-    careers_url: https://jobs.lever.co/wandb
-    notes: "MLOps platform."
+    careers_url: https://www.wandb.com/careers
+    scan_method: websearch
+    scan_query: '"Weights & Biases" OR "wandb" "Data Engineer" OR "ML Engineer" OR "Data Platform" remote United States'
+    notes: "MLOps platform. Lever board retired — scanned via websearch."
     enabled: true
 
   - name: Palantir
@@ -835,9 +837,10 @@ tracked_companies:
     enabled: true
 
   - name: Runway
-    careers_url: https://job-boards.greenhouse.io/runwayml
-    api: https://boards-api.greenhouse.io/v1/boards/runwayml/jobs
-    notes: "Generative AI video and creative tooling platform."
+    careers_url: https://runwayml.com/careers
+    scan_method: websearch
+    scan_query: '"Runway" "Data Engineer" OR "ML Engineer" OR "Data Platform" remote United States'
+    notes: "Generative AI video. Greenhouse board retired — scanned via websearch."
     enabled: true
 
   - name: Hightouch
@@ -912,12 +915,16 @@ tracked_companies:
 
   - name: Snowflake
     careers_url: https://careers.snowflake.com
-    api: https://boards-api.greenhouse.io/v1/boards/snowflakecomputing/jobs
+    scan_method: websearch
+    scan_query: 'site:careers.snowflake.com "Data Engineer" OR "Analytics Engineer" OR "Data Platform" OR "ML Engineer" United States'
+    notes: "Workday ATS — no direct API; scanned via websearch."
     enabled: true
 
   - name: DigitalOcean
     careers_url: https://www.digitalocean.com/careers
-    api: https://boards-api.greenhouse.io/v1/boards/digitalocean/jobs
+    scan_method: websearch
+    scan_query: 'site:digitalocean.com/careers "Data Engineer" OR "Analytics Engineer" OR "Data Platform" OR "ML Engineer"'
+    notes: "Workday ATS — no direct API; scanned via websearch."
     enabled: true
 
   - name: Google
