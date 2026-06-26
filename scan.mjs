@@ -134,6 +134,28 @@ function buildTitleFilter(titleFilter) {
   };
 }
 
+// US-only location filter. Reject is checked first (an explicit non-US
+// city/country wins). If allow_blank is true, empty/remote locations pass
+// (many US-remote postings list no location). Otherwise require a positive
+// US signal.
+function buildLocationFilter(locationFilter) {
+  if (!locationFilter || locationFilter.enabled === false) return () => true;
+  const positive  = (locationFilter.positive || []).map(k => k.toLowerCase());
+  const negative  = (locationFilter.negative || []).map(k => k.toLowerCase());
+  const allowBlank = locationFilter.allow_blank !== false;
+
+  return (loc) => {
+    const lower = (loc || '').toLowerCase().trim();
+    if (!lower) return allowBlank;                       // blank/unspecified
+    if (negative.some(k => lower.includes(k))) return false;   // explicit non-US wins
+    if (positive.length === 0) return true;
+    if (positive.some(k => lower.includes(k))) return true;
+    // location is specified, has no US signal, no explicit non-US signal:
+    // treat "remote" alone as allowed, everything else as out.
+    return /\bremote\b/.test(lower) ? allowBlank : false;
+  };
+}
+
 // ── Dedup ───────────────────────────────────────────────────────────
 
 function loadSeenUrls() {
@@ -264,6 +286,7 @@ async function main() {
   const config = parseYaml(readFileSync(PORTALS_PATH, 'utf-8'));
   const companies = config.tracked_companies || [];
   const titleFilter = buildTitleFilter(config.title_filter);
+  const locationFilter = buildLocationFilter(config.location_filter);
 
   // 2. Filter to enabled companies with detectable APIs
   const targets = companies
@@ -285,6 +308,7 @@ async function main() {
   const date = new Date().toISOString().slice(0, 10);
   let totalFound = 0;
   let totalFiltered = 0;
+  let totalLocationFiltered = 0;
   let totalDupes = 0;
   const newOffers = [];
   const errors = [];
@@ -299,6 +323,10 @@ async function main() {
       for (const job of jobs) {
         if (!titleFilter(job.title)) {
           totalFiltered++;
+          continue;
+        }
+        if (!locationFilter(job.location)) {
+          totalLocationFiltered++;
           continue;
         }
         if (seenUrls.has(job.url)) {
@@ -335,6 +363,7 @@ async function main() {
   console.log(`Companies scanned:     ${targets.length}`);
   console.log(`Total jobs found:      ${totalFound}`);
   console.log(`Filtered by title:     ${totalFiltered} removed`);
+  console.log(`Filtered by location:  ${totalLocationFiltered} removed (non-US)`);
   console.log(`Duplicates:            ${totalDupes} skipped`);
   console.log(`New offers added:      ${newOffers.length}`);
 

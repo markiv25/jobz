@@ -285,6 +285,47 @@ function buildQAPage(item, apiUrl) {
 </html>`;
 }
 
+// ============================================================
+//  COMMAND REGISTRY — every jobz CLI command, exposed in the GUI
+// ============================================================
+// kind 'script' → runs a node/shell command server-side, streams stdout.
+// kind 'mode'   → spawns `claude -p` with modes/_shared.md + modes/{file}.md
+//                 as the system context, streams the model output.
+//                 needsJD: true means the UI shows a JD textarea.
+const COMMANDS = {
+  // ---- deterministic scripts (no LLM, instant) ----
+  scan:     { kind: 'script', group: 'Discover',  label: 'Scan Portals',     desc: 'Hit Greenhouse/Ashby/Lever APIs for new offers (zero LLM cost)', cmd: ['node', 'scan.mjs'] },
+  tracker:  { kind: 'script', group: 'Pipeline',  label: 'Tracker',          desc: 'Application status overview',                cmd: ['cat', 'data/applications.md'] },
+  patterns: { kind: 'script', group: 'Insights',  label: 'Patterns',         desc: 'Analyze rejection patterns (JSON)',          cmd: ['node', 'analyze-patterns.mjs'] },
+  followup: { kind: 'script', group: 'Insights',  label: 'Follow-up Cadence', desc: 'Flag overdue follow-ups (JSON)',            cmd: ['node', 'followup-cadence.mjs'] },
+  liveness: { kind: 'script', group: 'Pipeline',  label: 'Check Liveness',   desc: 'Are tracked postings still live?',           cmd: ['node', 'check-liveness.mjs'] },
+  verify:   { kind: 'script', group: 'Maintenance', label: 'Verify Pipeline', desc: 'Health check on tracker + reports',         cmd: ['node', 'verify-pipeline.mjs'] },
+  dedup:    { kind: 'script', group: 'Maintenance', label: 'Dedup Tracker',   desc: 'Remove duplicate tracker entries',          cmd: ['node', 'dedup-tracker.mjs'] },
+  normalize:{ kind: 'script', group: 'Maintenance', label: 'Normalize Status',desc: 'Canonicalize tracker statuses',             cmd: ['node', 'normalize-statuses.mjs'] },
+  merge:    { kind: 'script', group: 'Maintenance', label: 'Merge Tracker',   desc: 'Merge batch tracker additions',             cmd: ['node', 'merge-tracker.mjs'] },
+  doctor:   { kind: 'script', group: 'Maintenance', label: 'Doctor',          desc: 'System diagnostics',                        cmd: ['node', 'doctor.mjs'] },
+  synccheck:{ kind: 'script', group: 'Maintenance', label: 'CV Sync Check',   desc: 'Check cv.md vs generated resumes',           cmd: ['node', 'cv-sync-check.mjs'] },
+
+  // ---- LLM modes (spawn claude -p) ----
+  oferta:        { kind: 'mode', group: 'Evaluate', label: 'Evaluate Offer',  desc: 'A–F scoring on one JD',                 file: 'oferta.md',        needsJD: true },
+  ofertas:       { kind: 'mode', group: 'Evaluate', label: 'Compare Offers',  desc: 'Rank multiple offers',                  file: 'ofertas.md',       needsJD: true },
+  deep:          { kind: 'mode', group: 'Research',  label: 'Deep Research',  desc: 'Deep company research',                 file: 'deep.md',          needsJD: true },
+  contacto:      { kind: 'mode', group: 'Research',  label: 'LinkedIn Outreach', desc: 'Find contacts + draft message',      file: 'contacto.md',      needsJD: true },
+  'interview-prep': { kind: 'mode', group: 'Research', label: 'Interview Prep', desc: 'Company-specific interview intel',     file: 'interview-prep.md', needsJD: true },
+  training:      { kind: 'mode', group: 'Evaluate', label: 'Evaluate Course', desc: 'Score a course/cert vs your goals',     file: 'training.md',      needsJD: true },
+  project:       { kind: 'mode', group: 'Evaluate', label: 'Evaluate Project', desc: 'Score a portfolio project idea',       file: 'project.md',       needsJD: true },
+  apply:         { kind: 'mode', group: 'Pipeline', label: 'Apply Assistant', desc: 'Generate application answers',           file: 'apply.md',         needsJD: true },
+  pipeline:      { kind: 'mode', group: 'Pipeline', label: 'Process Inbox',   desc: 'Process pending URLs in data/pipeline.md', file: 'pipeline.md',   needsJD: false },
+  'auto-pipeline':{ kind: 'mode', group: 'Pipeline', label: 'Full Pipeline',  desc: 'Evaluate + report + PDF + tracker',     file: 'auto-pipeline.md', needsJD: true },
+};
+
+const CMD_GROUPS = ['Discover', 'Evaluate', 'Research', 'Pipeline', 'Insights', 'Maintenance'];
+
+function readModeFiles(file) {
+  const read = p => { try { return fs.readFileSync(path.join(__dirname, p), 'utf8'); } catch { return ''; } };
+  return { shared: read('modes/_shared.md'), profile: read('modes/_profile.md'), mode: read(path.join('modes', file)) };
+}
+
 function buildHTML(pdfs, map, queue) {
   const pending = queue.filter(q => ['pending','processing'].includes(q.status)).length;
 
@@ -612,6 +653,34 @@ function buildHTML(pdfs, map, queue) {
     overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
   }
   .step-text { font-size: 0.78rem; font-weight: 500; max-width: 320px; }
+
+  /* ── Commands tab ── */
+  .cmd-group-title {
+    font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-3); margin: 22px 2px 10px; }
+  .cmd-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+  .cmd-card {
+    text-align: left; cursor: pointer; background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px 16px; transition: all 0.14s; color: var(--text-1); }
+  .cmd-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.18); }
+  .cmd-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .cmd-card-name { font-size: 0.9rem; font-weight: 650; }
+  .cmd-card-desc { font-size: 0.76rem; color: var(--text-3); margin-top: 5px; line-height: 1.35; }
+  .cmd-tag { font-size: 0.6rem; font-weight: 700; padding: 2px 7px; border-radius: 20px; letter-spacing: 0.04em; }
+  .cmd-tag-ai { background: rgba(168,85,247,0.16); color: #c084fc; }
+  .cmd-tag-fast { background: rgba(34,197,94,0.16); color: #4ade80; }
+  .cmd-runner {
+    margin-top: 26px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .cmd-runner-head {
+    display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--border);
+    font-size: 0.82rem; font-weight: 600; }
+  .cmd-close { margin-left: auto; padding: 2px 9px; font-size: 0.8rem; }
+  .cmd-runner .field { padding: 14px 16px 0; }
+  .cmd-out {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.76rem; line-height: 1.5;
+    white-space: pre-wrap; word-break: break-word; max-height: 460px; overflow-y: auto;
+    padding: 14px 16px; color: var(--text-2); }
 </style>
 </head>
 <body>
@@ -644,6 +713,10 @@ function buildHTML(pdfs, map, queue) {
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
         JD Queue
         ${pending > 0 ? `<span class="tab-badge">${pending}</span>` : ''}
+      </button>
+      <button class="tab" onclick="switchTab('commands', this)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+        Commands
       </button>
     </div>
 
@@ -715,6 +788,39 @@ function buildHTML(pdfs, map, queue) {
         <div class="log-body" id="log-lines">loading…</div>
       </div>
     </div>
+
+    <!-- TAB: Commands -->
+    <div id="tab-commands" class="tab-content">
+      ${CMD_GROUPS.map(group => {
+        const keys = Object.keys(COMMANDS).filter(k => COMMANDS[k].group === group);
+        if (!keys.length) return '';
+        return `
+        <div class="cmd-group-title">${group}</div>
+        <div class="cmd-grid">
+          ${keys.map(k => {
+            const c = COMMANDS[k];
+            const tag = c.kind === 'mode' ? '<span class="cmd-tag cmd-tag-ai">AI</span>' : '<span class="cmd-tag cmd-tag-fast">fast</span>';
+            return `<button class="cmd-card" onclick="runCommand('${k}', ${c.needsJD ? 'true' : 'false'})">
+              <div class="cmd-card-head"><span class="cmd-card-name">${c.label}</span>${tag}</div>
+              <div class="cmd-card-desc">${c.desc}</div>
+            </button>`;
+          }).join('')}
+        </div>`;
+      }).join('')}
+
+      <div class="cmd-runner" id="cmd-runner" style="display:none">
+        <div class="cmd-runner-head">
+          <span class="log-dot"></span> <span id="cmd-runner-title">Output</span>
+          <button class="btn cmd-close" onclick="document.getElementById('cmd-runner').style.display='none'">✕</button>
+        </div>
+        <div class="field" id="cmd-jd-field" style="display:none">
+          <label>Job description / company / question</label>
+          <textarea id="cmd-jd" placeholder="Paste the JD or input here…"></textarea>
+          <button class="btn btn-success" style="margin-top:8px" onclick="execPending()">Run</button>
+        </div>
+        <div class="log-body cmd-out" id="cmd-out"></div>
+      </div>
+    </div>
   </div>
 
 <script>
@@ -722,6 +828,21 @@ function buildHTML(pdfs, map, queue) {
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
     document.getElementById('tab-' + name).classList.add('active');
+    if (btn) btn.classList.add('active');
+    localStorage.setItem('jobz-tab', name);
+  }
+
+  // Restore last-active tab across the 30s auto-refresh
+  (function() {
+    const saved = localStorage.getItem('jobz-tab');
+    if (saved && document.getElementById('tab-' + saved)) {
+      const btn = document.querySelector('.tab[onclick*="\\'' + saved + '\\'"]');
+      switchTab(saved, btn);
+    }
+  })();
+
+  function setEffort(val, btn) {
+    document.querySelectorAll('.effort-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
   }
 
@@ -778,7 +899,8 @@ function buildHTML(pdfs, map, queue) {
   // Live polling when items are processing
   const HAS_PROCESSING = ${hasProcessing};
   if (HAS_PROCESSING) {
-    document.getElementById('tab-btn-queue').click();
+    // only auto-jump to queue if the user hasn't chosen a tab
+    if (!localStorage.getItem('jobz-tab')) document.getElementById('tab-btn-queue').click();
 
     async function pollProgress() {
       try {
@@ -836,6 +958,61 @@ function buildHTML(pdfs, map, queue) {
     html.setAttribute('data-theme', next);
     localStorage.setItem('jobz-theme', next);
     document.getElementById('theme-toggle').textContent = next === 'dark' ? '☀️' : '🌙';
+  }
+
+  // ── Command runner ──
+  let pendingCmd = null;
+  function runCommand(key, needsJD) {
+    clearTimeout(refreshTimer); // don't reload mid-run
+    const runner = document.getElementById('cmd-runner');
+    const jdField = document.getElementById('cmd-jd-field');
+    const out = document.getElementById('cmd-out');
+    document.getElementById('cmd-runner-title').textContent = key;
+    runner.style.display = '';
+    runner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    if (needsJD) {
+      pendingCmd = key;
+      jdField.style.display = '';
+      out.textContent = '';
+      document.getElementById('cmd-jd').focus();
+    } else {
+      jdField.style.display = 'none';
+      pendingCmd = null;
+      streamCommand(key, '');
+    }
+  }
+  function execPending() {
+    if (!pendingCmd) return;
+    const jd = document.getElementById('cmd-jd').value.trim();
+    streamCommand(pendingCmd, jd);
+  }
+  async function streamCommand(key, jd) {
+    clearTimeout(refreshTimer);
+    const out = document.getElementById('cmd-out');
+    out.textContent = '';
+    const append = t => { out.textContent += t + '\\n'; out.scrollTop = out.scrollHeight; };
+    try {
+      const res = await fetch('/api/run?cmd=' + encodeURIComponent(key), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jd })
+      });
+      const reader = res.body.getReader();
+      const dec = new TextDecoder();
+      let buf = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += dec.decode(value, { stream: true });
+        const parts = buf.split('\\n\\n');
+        buf = parts.pop();
+        for (const p of parts) {
+          const line = p.replace(/^data: ?/, '');
+          if (line === '[DONE]') { append('— complete —'); return; }
+          append(line);
+        }
+      }
+    } catch (e) { append('Network error: ' + e.message); }
   }
 </script>
 </body>
@@ -900,7 +1077,7 @@ Hard rules:
       'Connection': 'keep-alive',
     });
 
-    const claude = spawn('claude', ['-p', prompt], {
+    const claude = spawn('claude', ['-p', '--model', 'sonnet', prompt], {
       stdio: ['ignore', 'pipe', 'pipe'],
       env: { ...process.env }
     });
@@ -972,7 +1149,7 @@ Hard rules:
       'Connection': 'keep-alive',
     });
 
-    const claude = spawn('claude', ['-p', prompt], {
+    const claude = spawn('claude', ['-p', '--model', 'sonnet', prompt], {
       stdio: ['ignore', 'pipe', 'pipe'],
       env: { ...process.env }
     });
@@ -985,6 +1162,51 @@ Hard rules:
     claude.stderr.on('data', () => {});
     claude.on('close', () => { res.write('data: [DONE]\n\n'); res.end(); });
     claude.on('error', err => { res.write('data: Error: ' + err.message + '\n\ndata: [DONE]\n\n'); res.end(); });
+    return;
+  }
+
+  // POST /api/run?cmd=<key> — run a registered command, stream output via SSE
+  if (req.method === 'POST' && url.startsWith('/api/run')) {
+    const key = new URL('http://x' + url).searchParams.get('cmd') || '';
+    const spec = COMMANDS[key];
+    if (!spec) { res.writeHead(404); res.end('Unknown command'); return; }
+    const body = await readBody(req);
+
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+    });
+    const send = line => { res.write('data: ' + line.replace(/\r/g, '') + '\n\n'); };
+
+    let child;
+    if (spec.kind === 'script') {
+      send(`▸ running: ${spec.cmd.join(' ')}`);
+      child = spawn(spec.cmd[0], spec.cmd.slice(1), { cwd: __dirname, env: { ...process.env } });
+    } else {
+      // mode → claude -p with shared+profile+mode as context
+      const { shared, profile, mode } = readModeFiles(spec.file);
+      let cv = '';
+      try { cv = fs.readFileSync(path.join(__dirname, 'cv.md'), 'utf8'); } catch {}
+      const jd = (body.jd || '').trim();
+      if (spec.needsJD && !jd) { send('Error: this command needs a job description / input.'); send('[DONE]'); res.end(); return; }
+      const prompt = [
+        `You are running the jobz "${key}" mode. Follow the mode instructions exactly.`,
+        shared && `\n=== modes/_shared.md ===\n${shared}`,
+        profile && `\n=== modes/_profile.md ===\n${profile}`,
+        `\n=== modes/${spec.file} ===\n${mode}`,
+        cv && `\n=== cv.md ===\n${cv}`,
+        jd && `\n=== INPUT (JD / question / company) ===\n${jd}`,
+        `\nProduce the full output for this mode. Write any reports/files the mode specifies.`,
+      ].filter(Boolean).join('\n');
+      send(`▸ running claude -p for mode: ${key}…`);
+      child = spawn('claude', ['-p', '--model', 'sonnet', prompt], { cwd: __dirname, stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env } });
+    }
+
+    child.stdout.on('data', chunk => chunk.toString().split('\n').forEach(send));
+    child.stderr.on('data', chunk => chunk.toString().split('\n').forEach(l => send(l)));
+    child.on('close', code => { send(`▸ done (exit ${code})`); send('[DONE]'); res.end(); });
+    child.on('error', err => { send('Error: ' + err.message); send('[DONE]'); res.end(); });
     return;
   }
 
