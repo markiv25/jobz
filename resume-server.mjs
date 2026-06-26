@@ -335,10 +335,13 @@ function buildHTML(pdfs, map, queue) {
         const roleCell = isSkip && item.role
           ? `<span style="color:var(--text-3);font-size:0.78rem;font-weight:400"> — ${item.role}</span>`
           : '';
+        const effortBadge = item.effort === 'hard'
+          ? `<span style="margin-left:0.4rem;font-size:0.68rem;font-weight:700;padding:0.1rem 0.45rem;border-radius:10px;background:rgba(239,68,68,0.12);color:#f87171;border:1px solid rgba(239,68,68,0.2)">HARD</span>`
+          : `<span style="margin-left:0.4rem;font-size:0.68rem;font-weight:700;padding:0.1rem 0.45rem;border-radius:10px;background:rgba(245,158,11,0.12);color:#fbbf24;border:1px solid rgba(245,158,11,0.2)">MED</span>`;
         return `
         <tr id="row-${item.id}">
           <td><span class="loc-text">${(item.added || '').slice(0, 16).replace('T', ' ')}</span></td>
-          <td><span class="company-name">${item.company || '—'}</span>${roleCell}</td>
+          <td><span class="company-name">${item.company || '—'}</span>${roleCell}${effortBadge}</td>
           <td><span class="preview-text">${preview}…</span></td>
           <td><div id="step-${item.id}"><span class="status-chip ${chipClass}">${spinner} ${statusLabel}</span></div></td>
           <td>
@@ -548,6 +551,17 @@ function buildHTML(pdfs, map, queue) {
     display: block; font-size: 0.75rem; font-weight: 600; color: var(--text-3);
     margin-bottom: 0.35rem; letter-spacing: 0.02em;
   }
+  /* ── Effort toggle ── */
+  .effort-toggle { display: flex; gap: 0.4rem; }
+  .effort-btn {
+    padding: 0.35rem 1rem; border-radius: var(--radius-sm);
+    font-size: 0.8rem; font-weight: 600; cursor: pointer; font-family: inherit;
+    border: 1px solid var(--border-2); background: var(--surface-2); color: var(--text-3);
+    transition: all 0.15s;
+  }
+  .effort-btn.active[data-effort="med"]  { border-color: var(--warning);  background: rgba(245,158,11,0.1); color: var(--warning); }
+  .effort-btn.active[data-effort="hard"] { border-color: var(--danger);   background: rgba(239,68,68,0.1);  color: var(--danger); }
+  .effort-btn:not(.active):hover { border-color: var(--text-3); color: var(--text-2); }
   .field input[type="text"] {
     width: 100%; background: var(--bg); border: 1px solid var(--border-2);
     border-radius: var(--radius-sm); color: var(--text-1);
@@ -662,6 +676,13 @@ function buildHTML(pdfs, map, queue) {
           <input type="text" id="jd-company" placeholder="e.g. Stripe — Senior Data Engineer">
         </div>
         <div class="field">
+          <label>Effort Level</label>
+          <div class="effort-toggle">
+            <button type="button" class="effort-btn active" data-effort="med" onclick="setEffort('med', this)">Med — skills only</button>
+            <button type="button" class="effort-btn" data-effort="hard" onclick="setEffort('hard', this)">Hard — all keywords</button>
+          </div>
+        </div>
+        <div class="field">
           <label>Job Description</label>
           <textarea id="jd-text" placeholder="Paste the full job description here…"></textarea>
         </div>
@@ -704,9 +725,15 @@ function buildHTML(pdfs, map, queue) {
     btn.classList.add('active');
   }
 
+  function setEffort(val, btn) {
+    document.querySelectorAll('.effort-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
   async function addJD() {
     const jd      = document.getElementById('jd-text').value.trim();
     const company = document.getElementById('jd-company').value.trim();
+    const effort  = document.querySelector('.effort-btn.active')?.dataset.effort || 'med';
     const status  = document.getElementById('add-status');
     if (!jd) { status.textContent = 'Paste a JD first.'; return; }
     status.textContent = 'Adding…';
@@ -714,7 +741,7 @@ function buildHTML(pdfs, map, queue) {
       const res = await fetch('/api/jd', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jd, company })
+        body: JSON.stringify({ jd, company, effort })
       });
       if (res.ok) {
         document.getElementById('jd-text').value    = '';
@@ -971,6 +998,7 @@ Hard rules:
       added:   new Date().toISOString(),
       jd:      body.jd,
       company: body.company || '',
+      effort:  body.effort === 'hard' ? 'hard' : 'med',
       status:  'pending'
     });
     saveQueue(queue);

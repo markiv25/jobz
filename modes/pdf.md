@@ -13,7 +13,7 @@
 9. Reordena bullets de experiencia por relevancia al JD
 10. Reordena/ajusta las categorías de Skills para que las palabras clave del JD aparezcan primero
 11. Inyecta keywords naturalmente en logros existentes (NUNCA inventa)
-12. Genera `.tex` completo desde `templates/cv-template.tex` + contenido personalizado. **Escapa caracteres especiales de LaTeX** en todo el texto inyectado: `%` → `\%`, `&` → `\&`, `_` → `\_`, `#` → `\#`, `$` → `\$`, `~` → `\textasciitilde{}`, `^` → `\textasciicircum{}`, `\` → `\textbackslash{}`. Para URLs usa `\href{https://full-url}{display-text}`.
+12. Genera `.tex` completo desde `templates/VikramParmar_Resume_v21.tex` + contenido personalizado. **Escapa caracteres especiales de LaTeX** en todo el texto inyectado: `%` → `\%`, `&` → `\&`, `_` → `\_`, `#` → `\#`, `$` → `\$`, `~` → `\textasciitilde{}`, `^` → `\textasciicircum{}`, `\` → `\textbackslash{}`. Para URLs usa `\href{https://full-url}{display-text}`.
 13. **Determina el próximo número `{N}`** — usa el contador atómico para evitar colisiones con agentes paralelos:
     - Ejecuta: `node get-resume-n.mjs` → imprime el número único reservado para este agente
     - Si el usuario especificó un nombre custom (ej. "tmobile"), usa ese nombre en vez de `{N}` y NO llames al script
@@ -37,7 +37,7 @@
 
 ## Diseño del PDF (LaTeX — NO MODIFICAR)
 
-El diseño está fijado en `templates/cv-template.tex`. **No alteres la preamble, geometry, titleformat, ni los wrappers `{\small ...}`.** Solo cambia el texto inyectado en los placeholders.
+El diseño está fijado en `templates/VikramParmar_Resume_v21.tex`. **No alteres la preamble, geometry, titleformat, ni los wrappers `{\small ...}`.** Solo cambia el texto inyectado en los placeholders.
 
 - **Font family**: `helvet` con `\sfdefault` (Helvetica/sans-serif)
 - **Base size**: `10.9pt`, `letterpaper`
@@ -68,7 +68,7 @@ Ejemplos de reformulación legítima:
 
 ## Template LaTeX
 
-Usar el template en `templates/cv-template.tex`. Reemplazar placeholders `<<...>>` con contenido personalizado (todo el texto debe estar pre-escapado para LaTeX — ver Step 12 arriba):
+Usar el template en `templates/VikramParmar_Resume_v21.tex`. Reemplazar placeholders `<<...>>` con contenido personalizado (todo el texto debe estar pre-escapado para LaTeX — ver Step 12 arriba):
 
 | Placeholder | Contenido |
 |-------------|-----------|
@@ -82,7 +82,7 @@ Usar el template en `templates/cv-template.tex`. Reemplazar placeholders `<<...>
 | `<<LINKEDIN_DISPLAY>>` | Texto a mostrar |
 | `<<SUMMARY_TEXT>>` | Summary personalizado con keywords (3-4 líneas, una sola línea de texto sin saltos) |
 | `<<SKILLS_BLOCK>>` | Bloque crudo de LaTeX. Cada categoría en su propia línea separada por línea en blanco. Formato: `Languages: Python, SQL, Bash\n\nData Engineering: ...\n\nDatabases: ...` (etc.) |
-| `<<EXPERIENCE_BLOCK>>` | Bloque crudo de LaTeX. Por cada rol: header con `\textbf{Company} \textbar{} Role` + fechas/ubicación, luego `\begin{itemize}` con los bullets reordenados, luego `\end{itemize}`, luego `\vspace{2pt}`. Replica exactamente el patrón del archivo original `templates/VikramParmar_Resume_v16.tex` |
+| `<<EXPERIENCE_BLOCK>>` | Bloque crudo de LaTeX. Por cada rol: header con `\textbf{Company} \textbar{} Role` + fechas/ubicación, luego `\begin{itemize}` con los bullets reordenados, luego `\end{itemize}`, luego `\vspace{2pt}`. Replica exactamente el patrón del archivo original `templates/VikramParmar_Resume_v21.tex` |
 | `<<EDUCATION_BLOCK>>` | Bloque crudo de LaTeX con cada degree |
 | `<<PROJECTS_BLOCK>>` | Top 3-4 proyectos en formato LaTeX (cada uno `\textbf{name} -- descripción \href{url}{display}`) |
 | `<<PUBLICATIONS_BLOCK>>` | Publicaciones en formato LaTeX |

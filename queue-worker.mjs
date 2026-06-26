@@ -100,8 +100,18 @@ function runClaude(prompt) {
 
 // ── prompt builder ────────────────────────────────────────────────────────────
 
-function buildPrompt(jd, cv, force = false) {
+function buildPrompt(jd, cv, force = false, effort = 'med') {
+  const effortInstruction = effort === 'hard'
+    ? 'If generating: inject ALL keywords from the JD everywhere they fit — Skills, summary, bullets. Reorder bullets by JD relevance. Add every JD tech term that maps to real candidate experience. Goal: maximum keyword coverage. NEVER invent skills. NEVER rephrase — insert the JD term into existing phrasing. 1 page HARD LIMIT — if it overflows, trim bullet length, never drop bullets.'
+    : 'If generating: add missing JD keywords to the Skills section ONLY. Keep all bullets and summary word-for-word unchanged. Add terms from the JD that map to real experience already on the CV. 1 page HARD LIMIT.';
+
   return `You are a resume tailoring agent for Vikram Kumar Parmar.
+
+WRITING RULES (apply at ALL effort levels):
+- Do NOT rephrase or paraphrase existing bullet points. Keep the candidate's exact wording.
+- Do NOT add buzzwords, fluff, or corporate speak ("spearheaded", "leveraged", "architected", "drove adoption", "utilized", "robust", "seamless").
+- Use short punchy verbs the candidate already uses: Built, Led, Ran, Designed, Wrote, Shipped, Cut, Grew.
+- Adding a keyword = inserting the exact JD term naturally into an existing phrase or into Skills. Not rewriting.
 
 ## Candidate CV (source of truth — NEVER invent skills not present here)
 ${cv}
@@ -110,7 +120,7 @@ ${cv}
 1. Score the JD fit 1.0–5.0 based on: skill match, seniority, location/remote, domain, comp, experience gap
 2. HARD SKIP if JD contains: "no visa sponsorship" / "not eligible for visa sponsorship" / "U.S. citizen or LPR" / "U.S. Person required" / requires active security clearance
 3. ${force ? 'FORCE GENERATE regardless of score — user explicitly requested this. Still hard-skip on visa/clearance blocks.' : 'AUTO-SKIP if score < 2.5'}
-4. If generating: tailor summary + reorder bullets by JD relevance + inject keywords naturally. 1 page max.
+4. Effort level: ${effort.toUpperCase()} — ${effortInstruction}
 5. LaTeX special chars (ALL injected text): % → \\%, & → \\&, _ → \\_, # → \\#, $ → \\$, ~ → \\textasciitilde{}
 
 ## Fixed header values
@@ -172,7 +182,7 @@ async function processItem(item, cv) {
 
   let output;
   try {
-    output = await runClaude(buildPrompt(item.jd, cv, item.force));
+    output = await runClaude(buildPrompt(item.jd, cv, item.force, item.effort || 'med'));
   } catch (err) {
     setStep(item.id, 'ERROR: ' + err.message.slice(0, 120));
     return { id: item.id, status: 'error', error: err.message.slice(0, 120) };
